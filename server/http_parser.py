@@ -1,3 +1,15 @@
+from server.StatusLine import *
+from server.Header import *
+from server.Response import *
+
+
+async def send_error(conn, status_code):
+    headers = Header()
+    status_line = StatusLine(status_code)
+    response = Response(status_line, headers, status_line.reason_phrese, conn)
+    return response
+
+
 async def parse(conn, addr, pid, ROOT_DIR):
     data = b""
 
@@ -14,17 +26,17 @@ async def parse(conn, addr, pid, ROOT_DIR):
     if not data:
         return
 
-    udata = data.decode("utf-8")
-    udata = udata.split("\r\n", 1)[0]
-    print(udata.split(" ", 2))
-    if len(udata.split(" ", 2)) < 3:
+    request = data.decode("utf-8")
+    request = request.split("\r\n", 1)[0]
+    print(request.split(" ", 2))
+    if len(request.split(" ", 2)) < 3:
         # senderror(conn, 404)
         print("404")
     else:
-        method, address, protocol = udata.split(" ", 2)
+        method, address, protocol = request.split(" ", 2)
         if method in ("GET", "HEAD"):
             print("method is get or head")
             # sendfile(conn, address, method, ROOT_DIR)
         else:
             print(405)
-            # senderror(conn, 405)
+            await send_error(conn, 405)

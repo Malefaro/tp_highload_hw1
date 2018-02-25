@@ -1,6 +1,7 @@
 class Connection(object):
 
     def __init__(self, host="localhost", port=3000):
+
         self._host = host
         self._port = port
 

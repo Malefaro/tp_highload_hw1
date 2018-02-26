@@ -1,6 +1,7 @@
 import asyncio
 from socket import *
 from server.http_parser import *
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import sys
 import os
@@ -17,11 +18,12 @@ forks = []
 
 
 async def main(server_sock, pid, loop):
+    e = ThreadPoolExecutor()
     while True:
         print('waiting for connection... listening on port')
         conn, addr = await loop.sock_accept(server_sock)
         try:
-            loop.create_task(parse(conn, addr, pid, "/", loop))
+            loop.create_task(parse(conn, addr, pid, "/", loop, e))
         except Exception:
             conn.close()
 

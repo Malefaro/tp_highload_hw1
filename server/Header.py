@@ -38,12 +38,11 @@ class Header(object):
     def content_length(self, length):
         self._content_length = length
 
-    @classmethod
-    def get_headers(cls) -> bytes:
-        date = "Date: " + cls.date + "\r\n"
-        server = "Server: " + cls.server + "\r\n"
-        connection = "Connection: " + cls.connection + "\r\n"
-        content_type = "Content-Type: " + cls.content_type + "\r\n"
-        content_length = "Content-Length: " + str(cls.content_length) + "\r\n"
+    def get_headers(self) -> bytes:
+        date = "Date: " + self.date + "\r\n"
+        server = "Server: " + self.server + "\r\n"
+        connection = "Connection: " + self.connection + "\r\n"
+        content_type = "Content-Type: " + self.content_type + "\r\n"
+        content_length = "Content-Length: " + str(self.content_length) + "\r\n"
         answer = date + server + connection + content_type + content_length
         return answer.encode("utf-8")

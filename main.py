@@ -15,12 +15,13 @@ CONFIG = {
 
 forks = []
 
-async def main(serversock, pid, loop):
-    while 1:
+
+async def main(server_sock, pid, loop):
+    while True:
         print('waiting for connection... listening on port')
-        conn, addr = await loop.sock_accept(serversock)
+        conn, addr = await loop.sock_accept(server_sock)
         try:
-            await parse(conn, addr, pid, "/")
+            loop.create_task(parse(conn, addr, pid, "/", loop))
         except Exception:
             conn.close()
 
@@ -49,7 +50,8 @@ if __name__ == '__main__':
         if process_id == 0:
             ioloop = asyncio.get_event_loop()
             print('PID:', os.getpid())
-            ioloop.run_until_complete(main(sock, process_id, ioloop))
+            ioloop.create_task(main(sock, process_id, ioloop))
+            ioloop.run_forever()
             ioloop.close()
 
     for process_id in forks:

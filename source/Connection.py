@@ -9,7 +9,6 @@ class Connection(object):
     def host(self) -> str:
         return self._host
 
-
     @property
     def port(self) -> int:
         return self._port

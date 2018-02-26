@@ -3,19 +3,19 @@ from server.Header import *
 from server.Response import *
 
 
-async def send_error(conn, status_code):
+async def send_error(conn, status_code, loop):
     headers = Header()
     status_line = StatusLine(status_code)
-    response = Response(status_line, headers, status_line.reason_phrese, conn)
-    return response
+    response = Response(status_line, headers, status_line.reason_phrese, conn, loop)
+    await response.answer()
 
 
-async def parse(conn, addr, pid, ROOT_DIR):
+async def parse(conn, addr, pid, ROOT_DIR, loop):
     data = b""
 
     while not b"\r\n" in data:
         # read data wile does not get first line
-        tmp = conn.recv(1024)
+        tmp = await loop.sock_recv(conn, 1024)
         # if empty data
         if not tmp:
             break
@@ -39,4 +39,4 @@ async def parse(conn, addr, pid, ROOT_DIR):
             # sendfile(conn, address, method, ROOT_DIR)
         else:
             print(405)
-            await send_error(conn, 405)
+            await send_error(conn=conn, status_code=405, loop=loop)

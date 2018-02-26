@@ -43,28 +43,28 @@ async def send_file(conn, addr, method, root_dir, loop, executor):
     file_addr = (root_dir or '.') + file_addr
     filetype = splitext(file_addr)[1]
     if '..' in file_addr:
-        send_error(conn, 404, loop)
+        await send_error(conn, 404, loop)
     else:
         try:
             data = await read_file(file_addr, loop, executor)
             status = 200
             type = types[filetype]
             all_data = getsize(file_addr)
-            send_answer(conn, status, all_data, type)
+            await send_answer(conn, status, all_data, type)
             if method != "HEAD":
                 await loop.sock_sendall(conn, data)
             conn.close()
         except FileNotFoundError:
             if "index.html" in file_addr:
-                send_error(conn, 403, loop)
+                await send_error(conn, 403, loop)
             else:
-                send_error(conn, 404, loop)
+                await send_error(conn, 404, loop)
         except IsADirectoryError:
             if addr[-1] == '/':
                 addr += "index.html"
             else:
                 addr += "/index.html"
-            send_file(conn, addr, method, root_dir, loop, executor)
+            await send_file(conn, addr, method, root_dir, loop, executor)
 
 
 async def parse(conn, addr, pid, ROOT_DIR, loop, executor):

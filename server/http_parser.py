@@ -1,5 +1,6 @@
 from server.StatusLine import *
 from server.Header import *
+from asyncio import StreamReader, StreamWriter, sleep, AbstractEventLoop
 from server.Response import *
 import urllib.request
 from os.path import splitext, getsize
@@ -17,11 +18,11 @@ types = {
 }
 
 
-async def send_error(conn, status_code, loop):
+def send_error(status_code):
     headers = Header()
     status_line = StatusLine(status_code)
-    response = Response(status_line, headers, status_line.reason_phrese, conn, loop)
-    await response.answer()
+    response = Response(status_line, headers, status_line.reason_phrese)
+    return response.answer()
 
 
 async def send_answer(conn, status_code, all_data, loop):
@@ -43,7 +44,7 @@ async def send_file(conn, addr, method, root_dir, loop, executor):
     file_addr = (root_dir or '.') + file_addr
     filetype = splitext(file_addr)[1]
     if '..' in file_addr:
-        await send_error(conn, 404, loop)
+        await send_error(404)
     else:
         try:
             data = await read_file(file_addr, loop, executor)
@@ -56,9 +57,9 @@ async def send_file(conn, addr, method, root_dir, loop, executor):
             conn.close()
         except FileNotFoundError:
             if "index.html" in file_addr:
-                await send_error(conn, 403, loop)
+                await send_error(403)
             else:
-                await send_error(conn, 404, loop)
+                await send_error(404)
         except IsADirectoryError:
             if addr[-1] == '/':
                 addr += "index.html"
@@ -67,12 +68,12 @@ async def send_file(conn, addr, method, root_dir, loop, executor):
             await send_file(conn, addr, method, root_dir, loop, executor)
 
 
-async def parse(conn, addr, pid, ROOT_DIR, loop, executor):
+async def parse(reader, writer):
     data = b""
 
     while not b"\r\n" in data:
         # read data wile does not get first line
-        tmp = await loop.sock_recv(conn, 1024)
+        tmp = await reader.read(1024)
         # if empty data
         if not tmp:
             break
@@ -87,10 +88,13 @@ async def parse(conn, addr, pid, ROOT_DIR, loop, executor):
     request = request.split("\r\n", 1)[0]
     print(request.split(" ", 2))
     if len(request.split(" ", 2)) < 3:
-        send_error(conn=conn, status_code=404, loop=loop)
+        answer = send_error(status_code=404)
+        writer.write(answer)
     else:
         method, address, protocol = request.split(" ", 2)
         if method in ("GET", "HEAD"):
-            await send_file(conn, address, method, ROOT_DIR, loop, executor)
-        else:
-            await send_error(conn=conn, status_code=405, loop=loop)
+            answer = send_error(status_code=404)
+            writer.write(answer)
+        #     await send_file(conn, address, method, ROOT_DIR, loop, executor)
+        # else:
+        #     await send_error(conn=conn, status_code=405, loop=loop)

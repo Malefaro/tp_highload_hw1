@@ -6,7 +6,7 @@ from source.Config.config import Config
 from asyncio import StreamReader, StreamWriter, sleep, AbstractEventLoop
 from server.Response import *
 import urllib.request
-from os.path import splitext, getsize
+from os.path import getsize
 
 types = {
     "js": "application/javascript",
@@ -68,6 +68,7 @@ class Parser(object):
                 answer = send_error(status_code=405)
                 writer.write(answer)
                 await writer.drain()
+            writer.close()
 
 
 def send_error(status_code):
@@ -80,7 +81,7 @@ def send_error(status_code):
 def send_answer(status_code, data_size, type, data):
     headers = Header(content_length=data_size, content_type=type)
     status_line = StatusLine(status_code)
-    response = Response(status_line, headers, data)
+    response = Response(status_line, headers, data, content_length=data_size)
     return response.answer()
 
 
@@ -105,40 +106,42 @@ async def send_file(addr, method, root_dir):
         file_path += 'index.html'
 
     try:
-        filetype = file_path.split('.')[1]
+        filetype = file_path.split('.')[-1]
     except BaseException:
         filetype = 'plain'
 
     # filetype = splitext(file_addr)[1]
-    if '..' in file_addr:
-        send_error(404)
+    if len(file_path.split('../')) > 1:
+        return send_error(404)
     else:
         try:
-
-            logging.debug(f"try read file {file_path}")
-            data = await read_file(file_path)
-            logging.debug(f"completed read {file_path}")
-
+            data = None
             status = 200
             type = types[filetype]
             all_data = getsize(file_path)
-            #
-            # if method != "HEAD":
-            #     await loop.sock_sendall(conn, data)
 
-            answer = send_answer(status_code=status, data_size=all_data, type=type, data=data)
+            if method != "HEAD":
+                data = await read_file(file_path)
+                answer = send_answer(status_code=status, data_size=all_data, type=type, data=data)
+            else:
+                answer = send_answer(status_code=status, data_size=all_data, type=type, data=b'')
+
             return answer
 
         except FileNotFoundError:
-            if path[-1:] == '/':
+            if "index.html" in file_path:
                 return send_error(403)
             else:
                 return send_error(404)
+        except IOError:
+            return send_error(404)
         except NotADirectoryError:
             if path[-1:] == '/':
-                return send_error(403)
+                file_path += "index.html"
             else:
-                return send_error(404)
+                file_path += "/index.html"
+            send_file(file_addr,  method, root_dir)
+
 
 
 

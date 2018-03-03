@@ -32,13 +32,6 @@ async def main(conf, loop):
 
 
 if __name__ == '__main__':
-    # Configure logging to show the name of the thread
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(threadName)10s %(name)18s: %(message)s',
-        stream=sys.stderr,
-    )
 
     # conf = ParseConfig.parse()
     conf = SrcParseConfig.parse()

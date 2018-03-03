@@ -1,10 +1,14 @@
 import asyncio
+import functools
 from socket import *
 from server.http_parser import *
 from concurrent.futures import ThreadPoolExecutor
+from source.Config.parse_config import ParseConfig
 import logging
 import sys
 import os
+
+from source.Config.src_parse_config import SrcParseConfig
 
 CONFIG = {
     "BUFFER": 1024,
@@ -17,15 +21,14 @@ CONFIG = {
 forks = []
 
 
-async def main(server_sock, pid, loop):
-    e = ThreadPoolExecutor()
-    while True:
-        print('waiting for connection... listening on port')
-        conn, addr = await loop.sock_accept(server_sock)
-        try:
-            loop.create_task(parse(conn, addr, pid, "/", loop, e))
-        except Exception:
-            conn.close()
+async def main(conf, loop):
+    parser = Parser(conf)
+
+    await asyncio.start_server(client_connected_cb=parser.parse,
+                               host="localhost",
+                               port=conf.port,
+                               loop=loop,
+                               reuse_port=True)
 
 
 if __name__ == '__main__':
@@ -37,14 +40,11 @@ if __name__ == '__main__':
         stream=sys.stderr,
     )
 
-    ROOT_DIR = ""
-    ADDR = (CONFIG["HOST"], CONFIG["PORT"])
+    # conf = ParseConfig.parse()
+    conf = SrcParseConfig.parse()
 
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    sock.bind(ADDR)
-    # number of connections in the queue
-    sock.listen(10)
+    ROOT_DIR = ""
+    ADDR = (CONFIG["HOST"], int(conf.port))
 
     for x in range(0, CONFIG["WORKERS"] * CONFIG["CPU"]):
         process_id = os.fork()
@@ -52,9 +52,11 @@ if __name__ == '__main__':
         if process_id == 0:
             ioloop = asyncio.get_event_loop()
             print('PID:', os.getpid())
-            ioloop.create_task(main(sock, process_id, ioloop))
+
+            for i in range(0, 10):
+                ioloop.create_task(main(conf=conf, loop=ioloop))
+
             ioloop.run_forever()
-            ioloop.close()
 
     for process_id in forks:
         os.waitpid(process_id, 0)

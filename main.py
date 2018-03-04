@@ -1,48 +1,39 @@
 import asyncio
-import logging
-import sys
+from server.http_parser import *
+from source.Config.parse_config import ParseConfig
 import os
 
-CONFIG = {
-    "BUFFER": 1024,
-    "HOST": "127.0.0.1",
-    "PORT": 80,
-    "WORKERS": 4,
-    "CPU": 4,
-}
+from source.Config.src_parse_config import SrcParseConfig
 
 forks = []
 
 
-def accept_client():
-    return 3.14
+async def main(conf, loop):
+    parser = Parser(conf)
 
-
-async def main(process_id, path):
-    loop = asyncio.get_event_loop()
-    f = asyncio.start_server(accept_client, host="localhost", port=3000)
-    loop.run_until_complete(f)
-    loop.run_forever()
-
+    await asyncio.start_server(client_connected_cb=parser.parse,
+                               host="0.0.0.0",
+                               port=conf.port,
+                               loop=loop,
+                               reuse_port=True)
 
 
 if __name__ == '__main__':
-    # Configure logging to show the name of the thread
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(threadName)10s %(name)18s: %(message)s',
-        stream=sys.stderr,
-    )
+    conf = ParseConfig.parse()
+    # conf = SrcParseConfig.parse()
 
-    ROOT_DIR = ""
-
-    for x in range(0, CONFIG["WORKERS"] * CONFIG["CPU"]):
+    for x in range(0, int(conf.cpu_count)*2):
         process_id = os.fork()
         forks.append(process_id)
         if process_id == 0:
+            ioloop = asyncio.get_event_loop()
             print('PID:', os.getpid())
-            main(os.getpid(), ROOT_DIR)
+
+            for i in range(0, int(conf.threads)):
+                ioloop.create_task(main(conf=conf, loop=ioloop))
+
+            ioloop.run_forever()
 
     for process_id in forks:
         os.waitpid(process_id, 0)

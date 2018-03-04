@@ -12,7 +12,7 @@ async def main(conf, loop):
     parser = Parser(conf)
 
     await asyncio.start_server(client_connected_cb=parser.parse,
-                               host="127.0.0.1",
+                               host="0.0.0.0",
                                port=conf.port,
                                loop=loop,
                                reuse_port=True)

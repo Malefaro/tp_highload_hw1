@@ -23,7 +23,7 @@ if __name__ == '__main__':
     conf = ParseConfig.parse()
     # conf = SrcParseConfig.parse()
 
-    for x in range(0, int(conf.cpu_count)*2):
+    for x in range(0, int(conf.cpu_count)):
         process_id = os.fork()
         forks.append(process_id)
         if process_id == 0:

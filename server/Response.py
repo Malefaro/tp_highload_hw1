@@ -1,15 +1,15 @@
-from server.StatusLine import *
+from server.StatusLine import StatusLine
 from server.Header import *
+
 
 class Response(object):
 
-    def __init__(self, status_line: StatusLine, headers: Header, message: str, connection, loop):
+    def __init__(self, status_line: StatusLine, headers: Header, message: bytes = None, content_length: int = None):
 
         self._status_line = status_line
         self._headers = headers
-        self._message = message
-        self._connection = connection
-        self._loop = loop
+        self._content_length = 0 if content_length is None else content_length
+        self._message = b"" if message is None else message
 
     @property
     def status_line(self) -> StatusLine:
@@ -20,20 +20,21 @@ class Response(object):
         return self._headers
 
     @property
-    def message(self) -> str:
+    def message(self) -> bytes:
         return self._message
 
     @property
-    def connection(self):
-        return self._connection
+    def content_length(self):
+        return self._content_length
 
-    async def answer(self):
+    def answer(self) -> bytes:
         status_line: StatusLine = self.status_line
         headers: Header = self.headers
-        message: str = self.message
-        headers.content_length = len(message)
-        data = status_line.get_status_line() + headers.get_headers() + b"\r\n" + message.encode("utf-8")
+        message: bytes = self.message
+        headers.content_length = self.content_length
+        data = status_line.get_status_line() + headers.get_headers() + b"\r\n"
+        data += message
 
-        await self._loop.sock_sendall(self._connection, data)
+        return data
 
 

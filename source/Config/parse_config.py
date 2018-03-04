@@ -16,7 +16,7 @@ class ParseConfig(object):
         conf = {}
 
         try:
-            file = open('/etc/http.conf')
+            file = open('/etc/httpd.conf')
             for line in file:
                 line.strip()
                 pair = line.split()

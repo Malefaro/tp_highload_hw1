@@ -22,4 +22,4 @@ class Config(object):
 
     @property
     def root_dir(self):
-        return self.root_dir
+        return self._root_dir

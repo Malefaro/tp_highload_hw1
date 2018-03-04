@@ -21,7 +21,7 @@ types = {
     "plain": "text/plain"
 }
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
 class Parser(object):

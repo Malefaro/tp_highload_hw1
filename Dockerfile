@@ -3,7 +3,7 @@ FROM python:slim
 MAINTAINER Grigoryev Pavel
 
 ADD ./ /custom_server
-ADD ./http-test-suite/httptest/ /var/www/html/
+ADD ./http-test-suite/httptest /var/www/html/httptest
 ADD ./httpd.conf /etc/
 
 RUN apt-get update

@@ -12,4 +12,4 @@ WORKDIR /custom_server
 
 USER root
 
-CMD [ "python3.6", "./main.py" ]
+CMD python3.6 ./main.py

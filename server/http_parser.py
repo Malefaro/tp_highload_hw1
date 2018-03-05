@@ -51,7 +51,7 @@ class Parser(object):
 
         request = data.decode("utf-8")
         request = request.split("\r\n", 1)[0]
-        print(request.split(" ", 2))
+        logging.debug(request.split(" ", 2))
         if len(request.split(" ", 2)) < 3:
             answer = send_error(status_code=404)
             writer.write(answer)
@@ -97,7 +97,7 @@ async def send_file(addr, method, root_dir):
     logging.debug(f"[send_file] try (root_dir or '.') + file_addr")
     file_addr = (root_dir or '.') + file_addr
     logging.debug(f"[send_file] try splitext(file_addr)[1]")
-    logging.info(f"[senf_file] file_addr: {file_addr}")
+    logging.debug(f"[senf_file] file_addr: {file_addr}")
 
     path = file_addr
     file_path = file_addr

@@ -13,22 +13,23 @@ class ParseConfig(object):
 
     @staticmethod
     def parse() -> Config:
-        conf = {}
 
-        try:
-            file = open('/etc/httpd.conf')
+        data = {}
+        with open('/etc/httpd.conf') as file:
             for line in file:
-                line.strip()
+                line = line.strip()
+                if not line:
+                    continue
                 pair = line.split()
-                if len(pair) != 2:
-                    raise BadConfig("number of params must equal two")
-
-                conf.update({
-                    pair[0]: pair[1]
+                key: str = pair[0]
+                value: str = pair[1]
+                data.update({
+                    key: value
                 })
 
-        except BadConfig as err:
-            logging.error(err)
+        listen = 80 if data.get('listen') is None else int(data['listen'])
+        cpu_limit = 1 if data.get('cpu_limit') is None else int(data['cpu_limit'])
+        thread_limit = 8 if data.get('thread_limit') is None else int(data['thread_limit'])
+        document_root = "/var/www/html" if data.get('document_root') is None else data['document_root']
 
-        return Config(port=conf.get('listen'), cpu_count=conf.get('cpu_limit'),
-                      threads=conf.get('thread_limit'), root_dir=conf.get('document_root'))
+        return Config(port=listen, cpu_count=cpu_limit, threads=thread_limit, root_dir=document_root)

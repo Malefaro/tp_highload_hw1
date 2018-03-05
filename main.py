@@ -20,8 +20,8 @@ async def main(conf, loop):
 
 if __name__ == '__main__':
 
-    conf = ParseConfig.parse()
-    # conf = SrcParseConfig.parse()
+    # conf = ParseConfig.parse()
+    conf = SrcParseConfig.parse()
 
     for x in range(0, int(conf.cpu_count)):
         process_id = os.fork()

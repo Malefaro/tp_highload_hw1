@@ -6,9 +6,9 @@ class SrcParseConfig(object):
     @staticmethod
     def parse() -> Config:
 
-        port = 8081
+        port = 80
         cpu_count = 4
         threads = 256
-        root_dir = '/home/anton/dev/tp/highload/pavel/tp_highload_hw1/http-test-suite/httptest'
+        root_dir = '/var/www/html'
 
         return Config(port=port, cpu_count=cpu_count, threads=threads, root_dir=root_dir)
